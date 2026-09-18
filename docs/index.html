@@ -4,249 +4,643 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Data Encoding & Flow: A Beginner's Guide</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300;0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
-        body { font-family: 'Inter', sans-serif; }
-        .gradient-text {
-            background: linear-gradient(to right, #2563eb, #7c3aed);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+        :root {
+            --ntu-navy: #1B2A4A;
+            --ntu-dark: #1E3054;
+            --ntu-blue: #2C5697;
+            --ntu-blue-light: #3D6DB5;
+            --ntu-crimson: #C8102E;
+            --ntu-crimson-dark: #A50D26;
+            --bg: #FFFFFF;
+            --bg-off: #F4F5F7;
+            --border: #DDE1E6;
+            --border-light: #E8EAED;
+            --text: #1B2A4A;
+            --text-body: #333D4D;
+            --text-dim: #5F6B7A;
+            --text-light: #8C95A1;
+            --c-data: #2C5697;
+            --c-vec: #1A7A5C;
+            --c-llm: #C8102E;
         }
-        details summary {
-            cursor: pointer;
-            list-style: none; /* Remove default arrow */
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: 'Open Sans', sans-serif;
+            color: var(--text-body);
+            background: var(--bg-off);
         }
-        details summary::-webkit-details-marker {
-            display: none; /* Remove default arrow for Webkit browsers */
+        h1, h2, h3, h4 { color: var(--text); }
+
+        .hero {
+            background: var(--ntu-navy);
+            border-bottom: 5px solid var(--ntu-crimson);
         }
+        .hero .kicker { color: rgba(255,255,255,0.7); }
+        .hero h1 { color: #FFFFFF; font-weight: 300; }
+        .hero h1 strong { color: var(--ntu-crimson); font-weight: 700; }
+        .hero p { color: rgba(255,255,255,0.75); }
+
+        .subnav {
+            position: sticky; top: 0; z-index: 20;
+            background: var(--bg);
+            border-bottom: 1px solid var(--border);
+        }
+        .subnav a {
+            color: var(--text-dim);
+            font-size: 0.8rem;
+            font-weight: 600;
+            padding: 0.9rem 0.75rem;
+            white-space: nowrap;
+            border-bottom: 3px solid transparent;
+            transition: color 0.2s ease, border-color 0.2s ease;
+        }
+        .subnav a:hover, .subnav a.active {
+            color: var(--ntu-navy);
+            border-color: var(--ntu-crimson);
+        }
+
+        .card-section {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+        }
+        .section-icon { background: rgba(27,42,74,0.06); color: var(--ntu-navy); }
+
+        .callout {
+            border-left: 4px solid var(--ntu-crimson);
+            background: var(--bg-off);
+            border-radius: 0 4px 4px 0;
+        }
+
+        .tool-card {
+            border: 1px solid var(--border);
+            border-top: 4px solid var(--module-color, var(--ntu-blue));
+            border-radius: 4px;
+            background: var(--bg);
+            transition: transform 0.2s ease, border-color 0.2s ease;
+        }
+        .tool-card:hover { transform: scale(1.02); }
+
+        .tag {
+            display: inline-block;
+            font-size: 0.65rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.2em 0.6em;
+            border-radius: 3px;
+            background: color-mix(in srgb, var(--module-color, var(--ntu-blue)) 14%, transparent);
+            color: var(--module-color, var(--ntu-blue));
+        }
+
+        .case-card {
+            border-left: 4px solid var(--module-color, var(--ntu-blue));
+            background: var(--bg-off);
+            border-radius: 0 4px 4px 0;
+        }
+
+        details summary { cursor: pointer; list-style: none; }
+        details summary::-webkit-details-marker { display: none; }
         details summary::before {
-            content: '▶'; /* Custom arrow */
+            content: '▶';
             margin-right: 0.5rem;
             transition: transform 0.2s;
             display: inline-block;
+            color: var(--module-color, var(--ntu-blue));
         }
-        details[open] summary::before {
-            transform: rotate(90deg);
+        details[open] summary::before { transform: rotate(90deg); }
+
+        /* Scroll reveal */
+        .reveal { opacity: 0; transform: translateY(14px); transition: opacity 0.7s ease, transform 0.7s ease; }
+        .reveal.is-visible { opacity: 1; transform: translateY(0); }
+        @media (prefers-reduced-motion: reduce) {
+            .reveal { opacity: 1; transform: none; transition: none; }
         }
+
+        /* Byte-size simulator */
+        .format-btn {
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 0.6rem 1rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-dim);
+            background: var(--bg);
+            transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+        }
+        .format-btn.active {
+            border-color: var(--module-color);
+            color: var(--module-color);
+            background: color-mix(in srgb, var(--module-color) 10%, transparent);
+        }
+        .size-track {
+            height: 14px;
+            background: var(--bg-off);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .size-fill {
+            height: 100%;
+            width: 0%;
+            background: var(--module-color, var(--ntu-blue));
+            transition: width 0.6s ease, background 0.3s ease;
+        }
+
+        /* Row vs column demo */
+        .scan-table { border-collapse: collapse; width: 100%; font-size: 0.85rem; }
+        .scan-table th, .scan-table td {
+            border: 1px solid var(--border);
+            padding: 0.5rem 0.75rem;
+            text-align: left;
+            transition: background 0.15s ease, color 0.15s ease;
+        }
+        .scan-table th { background: var(--bg-off); color: var(--text); font-weight: 700; }
+        .scan-cell.hit { background: var(--ntu-navy); color: #fff; }
+        .scan-btn {
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 0.6rem 1rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            background: var(--bg);
+            color: var(--text-dim);
+            transition: border-color 0.2s ease, color 0.2s ease;
+        }
+        .scan-btn.active { border-color: var(--ntu-navy); color: var(--ntu-navy); }
+
+        /* Data flow diagram */
+        .flow-tab {
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 0.55rem 0.9rem;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--text-dim);
+            background: var(--bg);
+            transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+        }
+        .flow-tab.active {
+            border-color: var(--module-color, var(--ntu-crimson));
+            color: var(--module-color, var(--ntu-crimson));
+            background: color-mix(in srgb, var(--module-color, var(--ntu-crimson)) 10%, transparent);
+        }
+        .flow-box {
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            background: var(--bg-off);
+            padding: 0.6rem 0.9rem;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--text);
+            text-align: center;
+        }
+        .flow-line { position: relative; height: 2px; background: var(--border); flex: 1; margin: 0 0.5rem; }
+        .flow-dot {
+            position: absolute;
+            top: -5px; left: 0;
+            width: 12px; height: 12px;
+            border-radius: 50%;
+            background: var(--ntu-crimson);
+            opacity: 0;
+        }
+        .flow-dot.go-right { animation: dotRight 1s ease forwards; }
+        .flow-dot.go-left { animation: dotLeft 1s ease forwards; }
+        .flow-dot.go-down { animation: dotRight 0.9s ease forwards; }
+        @keyframes dotRight { 0% { left: 0%; opacity: 1; } 100% { left: calc(100% - 12px); opacity: 1; } }
+        @keyframes dotLeft { 0% { left: calc(100% - 12px); opacity: 1; } 100% { left: 0%; opacity: 1; } }
+        .flow-caption { font-size: 0.8rem; color: var(--text-dim); min-height: 2.4em; }
+
+        /* Quiz */
+        .quiz-option {
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 0.6rem 0.9rem;
+            font-size: 0.85rem;
+            text-align: left;
+            background: var(--bg);
+            color: var(--text-body);
+            transition: border-color 0.2s ease, background 0.2s ease;
+        }
+        .quiz-option:hover:not(:disabled) { border-color: var(--ntu-blue); }
+        .quiz-option.correct { border-color: var(--ntu-blue); background: color-mix(in srgb, var(--ntu-blue) 10%, transparent); font-weight: 700; }
+        .quiz-option.incorrect { border-color: var(--ntu-crimson); background: color-mix(in srgb, var(--ntu-crimson) 8%, transparent); }
+        .quiz-option:disabled { cursor: default; }
+        .quiz-feedback { font-size: 0.85rem; color: var(--text-dim); }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-800 antialiased p-4 md:p-8">
+<body class="antialiased">
 
-    <div class="max-w-5xl mx-auto space-y-12">
+    <!-- Hero -->
+    <header class="hero text-center py-16 px-4 md:px-8">
+        <p class="kicker text-xs font-bold uppercase tracking-widest mb-4">(SCTP) Advanced Professional Certificate &middot; NTU</p>
+        <h1 class="text-4xl md:text-5xl mb-4">Data Encoding & <strong>Flow</strong>: A Beginner's Guide</h1>
+        <p class="text-lg max-w-2xl mx-auto">
+            No prior data engineering knowledge needed. We'll use one story throughout: running an online grocery supermarket (FreshCart) that has to "pack" and "ship" information between systems.
+        </p>
+    </header>
 
-        <!-- Header -->
-        <header class="text-center space-y-4 pt-8">
-            <h1 class="text-4xl md:text-5xl font-bold gradient-text">Data Encoding & Flow: A Beginner's Guide</h1>
-            <p class="text-xl text-gray-600 max-w-2xl mx-auto">
-                This lesson teaches you how to efficiently "pack" and "ship" massive amounts of information, just like running a large fresh grocery supermarket (FreshCart).
-            </p>
-        </header>
+    <!-- Sticky section nav -->
+    <nav class="subnav">
+        <div class="max-w-5xl mx-auto flex overflow-x-auto px-4">
+            <a href="#why">1. Why It Matters</a>
+            <a href="#formats">2. Packing Materials</a>
+            <a href="#dataflow">3. Shipping Services</a>
+            <a href="#tryit">4. Try It Yourself</a>
+            <a href="#cases">5. Real-World Quiz</a>
+        </div>
+    </nav>
+
+    <div class="max-w-5xl mx-auto space-y-10 p-4 md:p-8">
 
         <!-- Section 1: Why Learn This? -->
-        <section class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-10">
+        <section id="why" class="card-section p-6 md:p-10 reveal">
             <div class="flex items-center space-x-4 mb-6">
-                <div class="p-3 bg-blue-100 text-blue-600 rounded-lg">
-                    <i data-lucide="lightbulb" class="w-8 h-8"></i>
-                </div>
+                <div class="p-3 section-icon rounded-lg"><i data-lucide="lightbulb" class="w-8 h-8"></i></div>
                 <h2 class="text-3xl font-bold">1. Why Learn This?</h2>
             </div>
-            
+
             <div class="grid md:grid-cols-2 gap-8">
                 <div>
-                    <p class="text-lg text-gray-700 leading-relaxed mb-4">
+                    <p class="text-lg leading-relaxed mb-4">
                         Imagine you are running an <strong>online fresh grocery supermarket (FreshCart)</strong>, similar to Amazon Fresh. With millions of orders every day, you need to interact with multiple systems such as logistics, payment, and inventory.
                     </p>
-                    <p class="text-lg text-gray-700 leading-relaxed mb-4">
-                        If information is not "packed" well or the "shipping" method is wrong, various problems will arise: shipping costs (network bandwidth) are too expensive, systems don't understand each other, or a slight change in the system causes a total crash. This lesson teaches you how to solve these problems to keep your "supermarket" running efficiently.
+                    <p class="text-lg leading-relaxed mb-4">
+                        If information is not "packed" well or the "shipping" method is wrong, various problems arise: shipping costs (network bandwidth) get too expensive, systems don't understand each other, or a small change causes a total crash. This lesson shows you how to avoid that.
                     </p>
                     <ul class="space-y-3 mt-6">
                         <li class="flex items-start">
-                            <i data-lucide="check-circle-2" class="w-6 h-6 text-green-500 mr-2 flex-shrink-0"></i>
-                            <span><strong>Save Money and Fast:</strong> Packing data into tiny binary formats can significantly save network bandwidth and server costs.</span>
+                            <i data-lucide="check-circle-2" class="w-6 h-6 mr-2 flex-shrink-0" style="color: var(--ntu-blue);"></i>
+                            <span><strong>Save Money and Time:</strong> Packing data into tiny binary formats can significantly save network bandwidth and server costs.</span>
                         </li>
                         <li class="flex items-start">
-                            <i data-lucide="check-circle-2" class="w-6 h-6 text-green-500 mr-2 flex-shrink-0"></i>
-                            <span><strong>Cross-language Communication:</strong> Different systems may use different programming languages (Python, Java, Go). We need a "universal translator" so they can understand each other.</span>
+                            <i data-lucide="check-circle-2" class="w-6 h-6 mr-2 flex-shrink-0" style="color: var(--ntu-blue);"></i>
+                            <span><strong>Cross-language Communication:</strong> Different systems may use different programming languages (Python, Java, Go). We need a "universal translator" so they understand each other.</span>
                         </li>
                         <li class="flex items-start">
-                            <i data-lucide="check-circle-2" class="w-6 h-6 text-green-500 mr-2 flex-shrink-0"></i>
-                            <span><strong>Future-Proofing:</strong> Business always changes, and systems need upgrades. We want to ensure that when adding new features, the old systems do not crash—this is called "schema evolution".</span>
+                            <i data-lucide="check-circle-2" class="w-6 h-6 mr-2 flex-shrink-0" style="color: var(--ntu-blue);"></i>
+                            <span><strong>Future-Proofing:</strong> Business changes, systems need upgrades. New features shouldn't crash old systems — this is called "schema evolution".</span>
                         </li>
                     </ul>
                 </div>
-                <div class="bg-gray-50 rounded-xl p-6 flex flex-col justify-center border border-gray-100">
-                    <h3 class="font-bold text-gray-800 mb-2">The Golden Rule of Data Engineering</h3>
-                    <p class="italic text-gray-600">"Data needs encoding to move between processes without shared memory."</p>
-                    <p class="text-sm text-gray-500 mt-4">Because two computers cannot "read minds," we must translate "thoughts" into "written language" (encoded bytes) and then "mail" them out (data flow).</p>
+                <div class="callout p-6 flex flex-col justify-center">
+                    <p class="tag mb-3" style="--module-color: var(--ntu-crimson);">Key Concept</p>
+                    <h3 class="font-bold mb-2">The Golden Rule of Data Engineering</h3>
+                    <p class="italic" style="color: var(--text-dim);">"Data needs encoding to move between processes that don't share memory."</p>
+                    <p class="text-sm mt-4" style="color: var(--text-dim);">Two computers cannot "read minds." We must translate "thoughts" into "written language" (encoded bytes), then "mail" them out (data flow).</p>
                 </div>
             </div>
         </section>
 
-        <!-- Section 2: Differences Among Tools -->
-        <section class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-10">
+        <!-- Section 2A: Formats -->
+        <section id="formats" class="card-section p-6 md:p-10 reveal">
             <div class="flex items-center space-x-4 mb-6">
-                <div class="p-3 bg-purple-100 text-purple-600 rounded-lg">
-                    <i data-lucide="box" class="w-8 h-8"></i>
-                </div>
-                <h2 class="text-3xl font-bold">2. Different Tools, Different Ways to "Pack" and "Ship"</h2>
+                <div class="p-3 section-icon rounded-lg"><i data-lucide="box" class="w-8 h-8"></i></div>
+                <h2 class="text-3xl font-bold">2. "Packing Materials": Data Encoding</h2>
             </div>
 
-            <h3 class="text-xl font-semibold mb-4 text-gray-800 border-b pb-2">A. "Packing Materials": Data Encoding</h3>
-            <div class="grid md:grid-cols-3 gap-6 mb-10">
-                <!-- Textual -->
-                <div class="border border-gray-200 rounded-xl p-5 hover:shadow-md transition">
-                    <div class="text-blue-500 mb-3"><i data-lucide="file-text" class="w-8 h-8"></i></div>
-                    <h4 class="font-bold text-lg mb-2">Textual Formats (JSON, XML, CSV)</h4>
-                    <p class="text-sm text-gray-600 mb-3">
-                        Like <strong>transparent plastic boxes</strong>. Humans can see what's inside at a glance, but they take up a lot of space and are slower for machines to process. Suitable for human reading and simple data exchange.
-                    </p>
+            <div class="grid md:grid-cols-3 gap-6">
+                <div class="tool-card p-5" style="--module-color: var(--ntu-blue);">
+                    <p class="tag mb-3">Human-Readable</p>
+                    <div class="mb-3" style="color: var(--ntu-blue);"><i data-lucide="file-text" class="w-8 h-8"></i></div>
+                    <h4 class="font-bold text-lg mb-2">Textual (JSON, XML, CSV)</h4>
+                    <p class="text-sm mb-3" style="color: var(--text-dim);">Like <strong>transparent plastic boxes</strong>. Anyone can see what's inside, but they take up more space and are slower for machines to process.</p>
                     <details class="mt-3">
-                        <summary class="font-semibold text-sm text-blue-700">Learn More</summary>
-                        <div class="text-xs text-gray-600 mt-2">
-                            <ul>
-                                <li><strong>JSON (JavaScript Object Notation):</strong> A common format for web and mobile apps, lightweight and easy to read.</li>
-                                <li><strong>XML (Extensible Markup Language):</strong> More complex structure, often used in legacy systems or specific industry standards.</li>
-                                <li><strong>CSV (Comma Separated Values):</strong> Simple tabular data, separated by commas.</li>
-                            </ul>
+                        <summary class="font-semibold text-sm" style="color: var(--ntu-blue);">Learn More</summary>
+                        <div class="text-xs mt-2 space-y-1" style="color: var(--text-dim);">
+                            <p><strong>JSON:</strong> lightweight, common for web/mobile apps.</p>
+                            <p><strong>XML:</strong> more complex, used in legacy/industry systems.</p>
+                            <p><strong>CSV:</strong> simple comma-separated tabular data.</p>
                         </div>
                     </details>
                 </div>
-                <!-- Row Binary -->
-                <div class="border border-gray-200 rounded-xl p-5 hover:shadow-md transition">
-                    <div class="text-purple-500 mb-3"><i data-lucide="rows" class="w-8 h-8"></i></div>
-                    <h4 class="font-bold text-lg mb-2">Row-based Binary (Thrift, Protobuf, Avro)</h4>
-                    <p class="text-sm text-gray-600 mb-3">
-                        Like <strong>vacuum compression bags</strong>. Compress data to the extreme, small in size, and fast to transmit. But humans cannot read it; machines need a "vacuum pump" (Schema) to unpack it. Suitable for efficient data transmission within systems.
-                    </p>
+                <div class="tool-card p-5" style="--module-color: var(--ntu-crimson);">
+                    <p class="tag mb-3">Row-Based Binary</p>
+                    <div class="mb-3" style="color: var(--ntu-crimson);"><i data-lucide="rows" class="w-8 h-8"></i></div>
+                    <h4 class="font-bold text-lg mb-2">Thrift, Protobuf, Avro</h4>
+                    <p class="text-sm mb-3" style="color: var(--text-dim);">Like <strong>vacuum compression bags</strong>: tiny and fast, but humans can't read it directly — a Schema is needed to "unpack" it.</p>
                     <details class="mt-3">
-                        <summary class="font-semibold text-sm text-purple-700">Learn More</summary>
-                        <div class="text-xs text-gray-600 mt-2">
-                            <ul>
-                                <li><strong>Thrift (Apache Thrift):</strong> Developed by Facebook, includes an RPC framework, efficient transmission via "field tags".</li>
-                                <li><strong>Protobuf (Protocol Buffers):</strong> Developed by Google, a purer serialization tool, also uses "field tags".</li>
-                                <li><strong>Avro (Apache Avro):</strong> Places the "manual" (Schema) directly in the data file header, particularly suitable for big data storage and evolution.</li>
-                            </ul>
-                            <p class="mt-2">These formats all use pre-defined "contracts" (Schemas) to ensure data structure consistency between different systems and support "schema evolution," meaning upgrading data structures without service interruption.</p>
+                        <summary class="font-semibold text-sm" style="color: var(--ntu-crimson);">Learn More</summary>
+                        <div class="text-xs mt-2 space-y-1" style="color: var(--text-dim);">
+                            <p><strong>Thrift:</strong> from Facebook, includes an RPC framework, uses "field tags".</p>
+                            <p><strong>Protobuf:</strong> from Google, pure serialization, also uses "field tags".</p>
+                            <p><strong>Avro:</strong> stores the Schema in the file itself; great for schema evolution.</p>
                         </div>
                     </details>
                 </div>
-                <!-- Column Binary -->
-                <div class="border border-gray-200 rounded-xl p-5 hover:shadow-md transition">
-                    <div class="text-green-500 mb-3"><i data-lucide="columns" class="w-8 h-8"></i></div>
-                    <h4 class="font-bold text-lg mb-2">Columnar Binary (Parquet, ORC, Arrow)</h4>
-                    <p class="text-sm text-gray-600 mb-3">
-                        Like <strong>categorized supermarket shelves</strong>. If you only want to buy a newspaper, you don't need to walk through the entire supermarket. Columnar storage lets you jump straight to the "newspaper section," which is extremely fast. Suitable for big data analysis, reading only the columns needed for the query.
-                    </p>
+                <div class="tool-card p-5" style="--module-color: var(--c-vec);">
+                    <p class="tag mb-3">Columnar Binary</p>
+                    <div class="mb-3" style="color: var(--c-vec);"><i data-lucide="columns" class="w-8 h-8"></i></div>
+                    <h4 class="font-bold text-lg mb-2">Parquet, ORC, Arrow</h4>
+                    <p class="text-sm mb-3" style="color: var(--text-dim);">Like <strong>categorized supermarket shelves</strong>: jump straight to the aisle you need instead of walking the whole store.</p>
                     <details class="mt-3">
-                        <summary class="font-semibold text-sm text-green-700">Learn More</summary>
-                        <div class="text-xs text-gray-600 mt-2">
-                            <ul>
-                                <li><strong>Parquet (Apache Parquet):</strong> The most popular columnar storage format in the big data field, with fast query speeds and high compression rates.</li>
-                                <li><strong>ORC (Optimized Row Columnar):</strong> Another efficient columnar storage format, similar to Parquet.</li>
-                                <li><strong>Arrow (Apache Arrow):</strong> In-memory columnar data format, used to accelerate data processing and exchange.</li>
-                            </ul>
-                            <p class="mt-2">When your boss only wants to see "total sales for last month," columnar storage only needs to read the "amount" column, saving significant time and computing resources.</p>
+                        <summary class="font-semibold text-sm" style="color: var(--c-vec);">Learn More</summary>
+                        <div class="text-xs mt-2 space-y-1" style="color: var(--text-dim);">
+                            <p><strong>Parquet:</strong> most popular columnar format, fast queries, high compression.</p>
+                            <p><strong>ORC:</strong> similar goals to Parquet.</p>
+                            <p><strong>Arrow:</strong> in-memory columnar format for fast processing.</p>
                         </div>
                     </details>
-                </div>
-            </div>
-
-            <h3 class="text-xl font-semibold mb-4 text-gray-800 border-b pb-2">B. "Shipping Services": Data Flow</h3>
-            <div class="grid md:grid-cols-2 gap-6">
-                <div class="flex space-x-4">
-                    <div class="mt-1 text-orange-500"><i data-lucide="globe" class="w-6 h-6"></i></div>
-                    <div>
-                        <h4 class="font-bold">REST API & GraphQL (Making a Call / Finding a Personal Shopper)</h4>
-                        <p class="text-sm text-gray-600">
-                            <strong>REST API:</strong> Like making a call to customer service. You ask a question, and the agent gives you an answer. This is the most common way for web pages and apps to communicate.
-                            <br><strong>GraphQL:</strong> Like finding a personal shopper. You can tell the shopper exactly what you want (e.g., "just give me the user's name and avatar"), no more, no less, saving communication costs.
-                        </p>
-                    </div>
-                </div>
-                <div class="flex space-x-4">
-                    <div class="mt-1 text-red-500"><i data-lucide="zap" class="w-6 h-6"></i></div>
-                    <div>
-                        <h4 class="font-bold">RPC (gRPC) (Direct Walkie-Talkie Connection)</h4>
-                        <p class="text-sm text-gray-600">
-                            Like a direct walkie-talkie connection. Different departments within a company (e.g., warehousing and delivery) use "walkie-talkies" to shout for maximum speed.
-                            This method is much faster than calling, with almost no latency, and is commonly used for efficient communication between microservices.
-                        </p>
-                    </div>
-                </div>
-                <div class="flex space-x-4 md:col-span-2">
-                    <div class="mt-1 text-indigo-500"><i data-lucide="mail-check" class="w-6 h-6"></i></div>
-                    <div>
-                        <h4 class="font-bold">Message Queues & Publish/Subscribe (Kafka, RabbitMQ) (Leaving a Note / Loudspeaker Broadcast)</h4>
-                        <p class="text-sm text-gray-600">
-                            This is an asynchronous shipping method.
-                            <br><strong>Message Queues:</strong> Like leaving a note. The front desk receives an order, writes a note, sticks it on the wall, and goes back to other tasks. Warehouse staff see the note and then fulfill the order. The front desk doesn't wait for a response from the warehouse.
-                            <br><strong>Publish/Subscribe:</strong> Like a loudspeaker broadcast. A user clicks the "buy" button, and the system shouts over the loudspeaker, "New order received!" All interested departments (inventory, logistics, recommendation systems) hear it and process it independently.
-                            This method is very flexible; even if one department is busy, it won't affect the work of others.
-                        </p>
-                    </div>
                 </div>
             </div>
         </section>
 
-        <!-- Section 3: Real World Use Cases -->
-        <section class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-10 mb-10">
+        <!-- Section 2B: Data Flow -->
+        <section id="dataflow" class="card-section p-6 md:p-10 reveal">
             <div class="flex items-center space-x-4 mb-6">
-                <div class="p-3 bg-green-100 text-green-600 rounded-lg">
-                    <i data-lucide="briefcase" class="w-8 h-8"></i>
-                </div>
-                <h2 class="text-3xl font-bold">3. Real-World Application Scenarios</h2>
+                <div class="p-3 section-icon rounded-lg"><i data-lucide="truck" class="w-8 h-8"></i></div>
+                <h2 class="text-3xl font-bold">3. "Shipping Services": Data Flow</h2>
+            </div>
+            <p class="mb-6" style="color: var(--text-dim);">Click each shipping method to watch how the message actually travels.</p>
+
+            <div class="flex flex-wrap gap-2 mb-6" id="flow-tabs">
+                <button class="flow-tab active" data-flow="rest" style="--module-color: var(--ntu-blue);">REST API</button>
+                <button class="flow-tab" data-flow="graphql" style="--module-color: var(--ntu-blue-light);">GraphQL</button>
+                <button class="flow-tab" data-flow="rpc" style="--module-color: var(--ntu-crimson);">RPC (gRPC)</button>
+                <button class="flow-tab" data-flow="queue" style="--module-color: var(--c-vec);">Message Queue</button>
+                <button class="flow-tab" data-flow="pubsub" style="--module-color: var(--c-vec);">Publish / Subscribe</button>
             </div>
 
-            <div class="space-y-6">
+            <div class="bg-off rounded-lg p-6" style="background: var(--bg-off); border-radius: 4px;">
+                <div class="flex items-center" id="flow-diagram">
+                    <div class="flow-box" id="flow-from">Client</div>
+                    <div class="flow-line"><span class="flow-dot" id="flow-dot-1"></span></div>
+                    <div class="flow-box" id="flow-to">Server</div>
+                </div>
+                <div id="flow-subs" class="flex justify-end gap-3 mt-4"></div>
+                <p class="flow-caption mt-4" id="flow-caption"></p>
+                <button class="scan-btn mt-2" id="flow-replay">▶ Replay Animation</button>
+            </div>
+        </section>
+
+        <!-- Section 4: Try It Yourself -->
+        <section id="tryit" class="card-section p-6 md:p-10 reveal">
+            <div class="flex items-center space-x-4 mb-6">
+                <div class="p-3 section-icon rounded-lg"><i data-lucide="flask-conical" class="w-8 h-8"></i></div>
+                <h2 class="text-3xl font-bold">4. Try It Yourself</h2>
+            </div>
+
+            <!-- Byte-size simulator -->
+            <h3 class="text-xl font-semibold mb-2">A. How much smaller is binary, really?</h3>
+            <p class="text-sm mb-4" style="color: var(--text-dim);">Same order record — <code>{"order_id": 88213, "item": "Milk 1L", "qty": 2, "price": 3.50}</code> — packed three different ways. Bars are illustrative proportions, not exact byte counts.</p>
+            <div class="flex flex-wrap gap-2 mb-4" id="format-buttons">
+                <button class="format-btn" data-format="json" data-size="100" style="--module-color: var(--ntu-blue);">JSON (Textual)</button>
+                <button class="format-btn" data-format="protobuf" data-size="32" style="--module-color: var(--ntu-crimson);">Protobuf (Row Binary)</button>
+                <button class="format-btn" data-format="avro" data-size="28" style="--module-color: var(--c-vec);">Avro (Row Binary)</button>
+            </div>
+            <div class="size-track mb-2"><div class="size-fill" id="size-fill"></div></div>
+            <p class="text-sm" id="format-caption" style="color: var(--text-dim);">Select a format above to see its relative size.</p>
+
+            <!-- Row vs column demo -->
+            <h3 class="text-xl font-semibold mb-2 mt-10">B. Why columnar storage is faster for analytics</h3>
+            <p class="text-sm mb-4" style="color: var(--text-dim);">Goal: find the total of the "Amount" column. Click a scan mode and see how many cells actually get read.</p>
+            <div class="flex flex-wrap gap-2 mb-4">
+                <button class="scan-btn active" id="scan-row">Row-based Scan</button>
+                <button class="scan-btn" id="scan-col">Columnar Scan</button>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="scan-table" id="scan-table">
+                    <thead><tr><th>Order ID</th><th>Customer</th><th>City</th><th>Amount</th></tr></thead>
+                    <tbody>
+                        <tr><td>1001</td><td>Alice</td><td>Singapore</td><td class="amount-col">24.50</td></tr>
+                        <tr><td>1002</td><td>Ben</td><td>Toronto</td><td class="amount-col">11.20</td></tr>
+                        <tr><td>1003</td><td>Chen</td><td>Singapore</td><td class="amount-col">58.00</td></tr>
+                        <tr><td>1004</td><td>Divya</td><td>Mumbai</td><td class="amount-col">9.75</td></tr>
+                        <tr><td>1005</td><td>Ethan</td><td>London</td><td class="amount-col">33.40</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <p class="text-sm mt-3" id="scan-caption" style="color: var(--text-dim);"></p>
+        </section>
+
+        <!-- Section 5: Real World Quiz -->
+        <section id="cases" class="card-section p-6 md:p-10 mb-10 reveal">
+            <div class="flex items-center space-x-4 mb-6">
+                <div class="p-3 section-icon rounded-lg"><i data-lucide="briefcase" class="w-8 h-8"></i></div>
+                <h2 class="text-3xl font-bold">5. Real-World Quiz: Pick the Right Tool</h2>
+            </div>
+            <p class="mb-6" style="color: var(--text-dim);">Read each scenario, choose a technology, then check the explanation.</p>
+
+            <div class="space-y-6" id="quiz-container">
                 <!-- Case 1 -->
-                <div class="p-5 bg-gray-50 rounded-xl border border-gray-200">
+                <div class="case-card p-5" style="--module-color: var(--ntu-blue);" data-answer="Parquet (Columnar)">
                     <div class="flex items-center space-x-3 mb-2">
-                        <i data-lucide="bar-chart-3" class="w-6 h-6 text-blue-600"></i>
-                        <h3 class="text-xl font-bold text-gray-800">Business Dashboards (Apache Parquet + SQL)</h3>
+                        <i data-lucide="bar-chart-3" class="w-6 h-6" style="color: var(--ntu-blue);"></i>
+                        <h3 class="text-xl font-bold">Business Dashboards</h3>
                     </div>
-                    <p class="text-gray-700"><strong>Scenario:</strong> A CEO wants to view the total sales for 2023 from 5 billion transaction records.</p>
-                    <p class="text-gray-600 mt-2 text-sm"><strong>Why use Parquet?</strong> Because Parquet is columnar storage, the system only needs to read the "sales" column, completely ignoring other columns like "customer name" or "address." This shortens the query from 10 minutes to 2 seconds.</p>
+                    <p><strong>Scenario:</strong> A CEO wants the total sales for 2023 from 5 billion transaction records.</p>
+                    <div class="grid sm:grid-cols-2 gap-2 mt-3 quiz-options">
+                        <button class="quiz-option" data-option="Parquet (Columnar)">Parquet (Columnar)</button>
+                        <button class="quiz-option" data-option="JSON over REST">JSON over REST</button>
+                        <button class="quiz-option" data-option="Kafka + Avro">Kafka + Avro</button>
+                        <button class="quiz-option" data-option="gRPC + Protobuf">gRPC + Protobuf</button>
+                    </div>
+                    <p class="quiz-feedback mt-3 hidden">Because Parquet is columnar, the system reads only the "sales" column and ignores "customer name" or "address" — turning a 10-minute scan into seconds.</p>
                 </div>
-
                 <!-- Case 2 -->
-                <div class="p-5 bg-gray-50 rounded-xl border border-gray-200">
+                <div class="case-card p-5" style="--module-color: var(--ntu-crimson);" data-answer="GraphQL">
                     <div class="flex items-center space-x-3 mb-2">
-                        <i data-lucide="smartphone" class="w-6 h-6 text-purple-600"></i>
-                        <h3 class="text-xl font-bold text-gray-800">Mobile Apps in Poor Network Environments (GraphQL + JSON)</h3>
+                        <i data-lucide="smartphone" class="w-6 h-6" style="color: var(--ntu-crimson);"></i>
+                        <h3 class="text-xl font-bold">Mobile App on Poor Network</h3>
                     </div>
-                    <p class="text-gray-700"><strong>Scenario:</strong> You open a social media app on a 3G network. The app only needs to display the user's avatar and name.</p>
-                    <p class="text-gray-600 mt-2 text-sm"><strong>Why use GraphQL?</strong> GraphQL allows the phone to tell the server precisely, "just give me the name and photo." This avoids downloading the user's entire history, bio, and settings (which REST might do), saving data and loading faster.</p>
+                    <p><strong>Scenario:</strong> A social app on 3G only needs to display a user's avatar and name.</p>
+                    <div class="grid sm:grid-cols-2 gap-2 mt-3 quiz-options">
+                        <button class="quiz-option" data-option="GraphQL">GraphQL</button>
+                        <button class="quiz-option" data-option="gRPC">gRPC</button>
+                        <button class="quiz-option" data-option="Avro">Avro</button>
+                        <button class="quiz-option" data-option="Parquet">Parquet</button>
+                    </div>
+                    <p class="quiz-feedback mt-3 hidden">GraphQL lets the phone ask precisely for "just the name and photo," avoiding a REST-style download of history, bio, and settings — saving data and loading faster.</p>
                 </div>
-
                 <!-- Case 3 -->
-                <div class="p-5 bg-gray-50 rounded-xl border border-gray-200">
+                <div class="case-card p-5" style="--module-color: var(--c-vec);" data-answer="gRPC + Protobuf">
                     <div class="flex items-center space-x-3 mb-2">
-                        <i data-lucide="car" class="w-6 h-6 text-green-600"></i>
-                        <h3 class="text-xl font-bold text-gray-800">Uber & Netflix Backend (gRPC + Protobuf)</h3>
+                        <i data-lucide="car" class="w-6 h-6" style="color: var(--c-vec);"></i>
+                        <h3 class="text-xl font-bold">Uber & Netflix Backend</h3>
                     </div>
-                    <p class="text-gray-700"><strong>Scenario:</strong> You call an Uber. The app must communicate instantly with the driver-matching system, pricing system, and mapping system simultaneously.</p>
-                    <p class="text-gray-600 mt-2 text-sm"><strong>Why use Protobuf/gRPC?</strong> These internal microservices need to communicate millions of times per second. Protobuf compresses data into tiny binary sizes, and gRPC sends it at extreme speeds without the "bloat" of normal web traffic.</p>
+                    <p><strong>Scenario:</strong> The app must talk instantly to driver-matching, pricing, and mapping systems at once.</p>
+                    <div class="grid sm:grid-cols-2 gap-2 mt-3 quiz-options">
+                        <button class="quiz-option" data-option="gRPC + Protobuf">gRPC + Protobuf</button>
+                        <button class="quiz-option" data-option="REST + JSON">REST + JSON</button>
+                        <button class="quiz-option" data-option="Kafka + Avro">Kafka + Avro</button>
+                        <button class="quiz-option" data-option="Parquet">Parquet</button>
+                    </div>
+                    <p class="quiz-feedback mt-3 hidden">These microservices talk millions of times per second. Protobuf shrinks data to tiny binary sizes, and gRPC sends it at extreme speed without normal web "bloat".</p>
                 </div>
-
                 <!-- Case 4 -->
-                <div class="p-5 bg-gray-50 rounded-xl border border-gray-200">
+                <div class="case-card p-5" style="--module-color: var(--ntu-blue-light);" data-answer="Kafka + Avro">
                     <div class="flex items-center space-x-3 mb-2">
-                        <i data-lucide="radio-tower" class="w-6 h-6 text-orange-600"></i>
-                        <h3 class="text-xl font-bold text-gray-800">E-commerce Real-time Tracking (Kafka + Avro)</h3>
+                        <i data-lucide="radio-tower" class="w-6 h-6" style="color: var(--ntu-blue-light);"></i>
+                        <h3 class="text-xl font-bold">E-commerce Real-time Tracking</h3>
                     </div>
-                    <p class="text-gray-700"><strong>Scenario:</strong> On a site like Amazon, every time a user clicks an item, adds to cart, or buys, multiple systems need to know (fraud detection, inventory, recommendation engine). </p>
-                    <p class="text-gray-600 mt-2 text-sm"><strong>Why use Kafka Pub/Sub + Avro?</strong> The website "publishes" click events to Kafka. Fraud detection and inventory systems "subscribe" to these click events and monitor them. Avro is used because it perfectly handles changing data structures (for example, if Amazon later adds a new "color" attribute to click events).</p>
+                    <p><strong>Scenario:</strong> Every click/add-to-cart/purchase must reach fraud detection, inventory, and recommendations at once.</p>
+                    <div class="grid sm:grid-cols-2 gap-2 mt-3 quiz-options">
+                        <button class="quiz-option" data-option="Kafka + Avro">Kafka + Avro</button>
+                        <button class="quiz-option" data-option="REST API">REST API</button>
+                        <button class="quiz-option" data-option="GraphQL">GraphQL</button>
+                        <button class="quiz-option" data-option="Parquet">Parquet</button>
+                    </div>
+                    <p class="quiz-feedback mt-3 hidden">The site "publishes" click events to Kafka; fraud detection and inventory "subscribe" independently. Avro handles changing event structures gracefully (e.g. a new "color" field later).</p>
                 </div>
             </div>
         </section>
+
+        <footer class="text-center text-xs pb-8" style="color: var(--text-light);">
+            (SCTP) Advanced Professional Certificate &middot; Nanyang Technological University
+        </footer>
 
     </div>
 
     <script>
-        // Initialize Lucide icons
         lucide.createIcons();
+
+        // Scroll reveal
+        const revealEls = document.querySelectorAll('.reveal');
+        const io = new IntersectionObserver((entries) => {
+            entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('is-visible'); });
+        }, { threshold: 0.15 });
+        revealEls.forEach(el => io.observe(el));
+
+        // Sub-nav scroll spy
+        const navLinks = document.querySelectorAll('.subnav a');
+        const sections = [...navLinks].map(a => document.querySelector(a.getAttribute('href')));
+        const spy = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    navLinks.forEach(a => a.classList.remove('active'));
+                    const link = document.querySelector(`.subnav a[href="#${entry.target.id}"]`);
+                    if (link) link.classList.add('active');
+                }
+            });
+        }, { rootMargin: '-40% 0px -50% 0px' });
+        sections.forEach(s => s && spy.observe(s));
+
+        // Byte-size simulator
+        const formatButtons = document.querySelectorAll('.format-btn');
+        const sizeFill = document.getElementById('size-fill');
+        const formatCaption = document.getElementById('format-caption');
+        const formatText = {
+            json: 'JSON is human-readable but repeats field names ("order_id", "item", ...) as text on every message — the biggest chunk of its size.',
+            protobuf: 'Protobuf replaces field names with small numbered "field tags" and packs numbers in binary, cutting size dramatically.',
+            avro: 'Avro drops per-field markers entirely — the reader relies on a shared Schema to know what each byte means, so the payload gets even leaner.'
+        };
+        formatButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                formatButtons.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                sizeFill.style.setProperty('--module-color', getComputedStyle(btn).getPropertyValue('--module-color'));
+                sizeFill.style.background = getComputedStyle(btn).getPropertyValue('--module-color');
+                requestAnimationFrame(() => { sizeFill.style.width = btn.dataset.size + '%'; });
+                formatCaption.textContent = formatText[btn.dataset.format];
+            });
+        });
+
+        // Row vs column scan demo
+        const scanRowBtn = document.getElementById('scan-row');
+        const scanColBtn = document.getElementById('scan-col');
+        const scanCaption = document.getElementById('scan-caption');
+        const allCells = document.querySelectorAll('#scan-table tbody td');
+        const amountCells = document.querySelectorAll('#scan-table .amount-col');
+        function runScan(mode) {
+            allCells.forEach(c => c.classList.remove('scan-cell', 'hit'));
+            if (mode === 'row') {
+                allCells.forEach(c => c.classList.add('scan-cell', 'hit'));
+                scanCaption.textContent = `Row-based storage must read all ${allCells.length} cells (every column, every row) just to add up "Amount".`;
+                scanRowBtn.classList.add('active'); scanColBtn.classList.remove('active');
+            } else {
+                amountCells.forEach(c => c.classList.add('scan-cell', 'hit'));
+                scanCaption.textContent = `Columnar storage reads only the ${amountCells.length} "Amount" cells — the other ${allCells.length - amountCells.length} cells are skipped entirely.`;
+                scanColBtn.classList.add('active'); scanRowBtn.classList.remove('active');
+            }
+        }
+        scanRowBtn.addEventListener('click', () => runScan('row'));
+        scanColBtn.addEventListener('click', () => runScan('col'));
+        runScan('row');
+
+        // Data flow animation
+        const flowConfig = {
+            rest: { type: 'sync', from: 'Client', to: 'Server', caption: 'REST API: the client makes a call and waits for a single answer — like calling customer service and waiting on the line.' },
+            graphql: { type: 'sync', from: 'Client', to: 'Server', caption: 'GraphQL: the client asks for exactly the fields it wants — like telling a personal shopper precisely what to fetch, nothing more.' },
+            rpc: { type: 'sync', from: 'Service A', to: 'Service B', caption: 'RPC (gRPC): a direct "walkie-talkie" call between internal services — extremely fast, almost no latency.' },
+            queue: { type: 'async-single', from: 'Producer', to: 'Queue', caption: 'Message Queue: the sender drops a note in a queue and moves on — a worker picks it up later, whenever it is free.' },
+            pubsub: { type: 'async-multi', from: 'Publisher', to: 'Topic', subs: ['Inventory', 'Fraud Check', 'Recommender'], caption: 'Publish/Subscribe: one event is broadcast, and every interested system hears it and reacts independently.' }
+        };
+        const flowFrom = document.getElementById('flow-from');
+        const flowTo = document.getElementById('flow-to');
+        const flowDiagram = document.getElementById('flow-diagram');
+        const flowSubs = document.getElementById('flow-subs');
+        const flowCaption = document.getElementById('flow-caption');
+        const flowTabs = document.querySelectorAll('.flow-tab');
+        let currentFlow = 'rest';
+
+        function playFlow(key) {
+            const cfg = flowConfig[key];
+            flowFrom.textContent = cfg.from;
+            flowTo.textContent = cfg.to;
+            flowCaption.textContent = cfg.caption;
+            flowSubs.innerHTML = '';
+
+            // reset primary line dot
+            const line = flowDiagram.querySelector('.flow-line');
+            line.innerHTML = '<span class="flow-dot" id="flow-dot-1"></span>';
+            const dot = document.getElementById('flow-dot-1');
+
+            if (cfg.type === 'sync') {
+                dot.classList.add('go-right');
+                setTimeout(() => {
+                    dot.classList.remove('go-right');
+                    dot.classList.add('go-left');
+                }, 900);
+            } else if (cfg.type === 'async-single') {
+                dot.classList.add('go-right');
+            } else if (cfg.type === 'async-multi') {
+                dot.classList.add('go-right');
+                cfg.subs.forEach((label, i) => {
+                    const box = document.createElement('div');
+                    box.className = 'flow-box';
+                    box.style.opacity = '0';
+                    box.style.transition = 'opacity 0.4s ease';
+                    box.textContent = label;
+                    flowSubs.appendChild(box);
+                    setTimeout(() => { box.style.opacity = '1'; }, 900 + i * 150);
+                });
+            }
+        }
+
+        flowTabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                flowTabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                currentFlow = tab.dataset.flow;
+                playFlow(currentFlow);
+            });
+        });
+        document.getElementById('flow-replay').addEventListener('click', () => playFlow(currentFlow));
+        playFlow(currentFlow);
+
+        // Quiz interaction
+        document.querySelectorAll('.case-card[data-answer]').forEach(card => {
+            const answer = card.dataset.answer;
+            const feedback = card.querySelector('.quiz-feedback');
+            card.querySelectorAll('.quiz-option').forEach(opt => {
+                opt.addEventListener('click', () => {
+                    const options = card.querySelectorAll('.quiz-option');
+                    options.forEach(o => { o.disabled = true; });
+                    if (opt.dataset.option === answer) {
+                        opt.classList.add('correct');
+                    } else {
+                        opt.classList.add('incorrect');
+                        options.forEach(o => { if (o.dataset.option === answer) o.classList.add('correct'); });
+                    }
+                    feedback.classList.remove('hidden');
+                });
+            });
+        });
     </script>
 </body>
 </html>

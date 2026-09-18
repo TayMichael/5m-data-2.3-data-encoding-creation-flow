@@ -10,3 +10,4 @@ data/*
 !data/file.orc
 !data/userdata1.parquet
 2.3 - Data Encoding and Data Flow.pdf
+quiz.md
