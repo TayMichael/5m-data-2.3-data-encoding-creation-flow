@@ -18,3 +18,4 @@ Data encoding is the lingua franca of data engineering. Every pipeline you build
 
 **Synchronous vs Asynchronous Data Flow** — REST APIs are request-response: you ask, you wait, you get an answer. Message queues are fire-and-forget: you publish a message, and consumers process it when ready. FreshCart's checkout system needs synchronous calls (confirm payment now). Sending order events to analytics can be asynchronous. Choosing the wrong pattern causes either unnecessary latency or unreliable delivery.
 
+📄 [View lesson 2.3 interactive page](https://su-ntu-ctp.github.io/5m-data-2.3-data-encoding-creation-flow/).
