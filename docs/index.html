@@ -359,6 +359,7 @@
             <p class="mb-6" style="color: var(--text-dim);">Click each shipping method to watch how the message actually travels.</p>
 
             <div class="flex flex-wrap gap-2 mb-6" id="flow-tabs">
+                <button class="flow-tab" data-flow="database" style="--module-color: var(--ntu-navy);">Database</button>
                 <button class="flow-tab active" data-flow="rest" style="--module-color: var(--ntu-blue);">REST API</button>
                 <button class="flow-tab" data-flow="graphql" style="--module-color: var(--ntu-blue-light);">GraphQL</button>
                 <button class="flow-tab" data-flow="rpc" style="--module-color: var(--ntu-crimson);">RPC (gRPC)</button>
@@ -390,11 +391,12 @@
             <p class="text-sm mb-4" style="color: var(--text-dim);">Same order record — <code>{"order_id": 88213, "item": "Milk 1L", "qty": 2, "price": 3.50}</code> — packed three different ways. Bars are illustrative proportions, not exact byte counts.</p>
             <div class="flex flex-wrap gap-2 mb-4" id="format-buttons">
                 <button class="format-btn" data-format="json" data-size="100" style="--module-color: var(--ntu-blue);">JSON (Textual)</button>
-                <button class="format-btn" data-format="protobuf" data-size="32" style="--module-color: var(--ntu-crimson);">Protobuf (Row Binary)</button>
-                <button class="format-btn" data-format="avro" data-size="28" style="--module-color: var(--c-vec);">Avro (Row Binary)</button>
+                <button class="format-btn" data-format="protobuf" data-size="41" style="--module-color: var(--ntu-crimson);">Protobuf (Row Binary)</button>
+                <button class="format-btn" data-format="avro" data-size="25" style="--module-color: var(--c-vec);">Avro (Row Binary)</button>
             </div>
             <div class="size-track mb-2"><div class="size-fill" id="size-fill"></div></div>
             <p class="text-sm" id="format-caption" style="color: var(--text-dim);">Select a format above to see its relative size.</p>
+            <p class="text-xs mt-2" style="color: var(--text-light);">These bars are illustrative only. For a real measured number: the lesson's own <code>Person</code> record (userName, favoriteNumber, interests) encodes to exactly <strong>32 bytes</strong> in Avro — see reference.md.</p>
 
             <!-- Row vs column demo -->
             <h3 class="text-xl font-semibold mb-2 mt-10">B. Why columnar storage is faster for analytics</h3>
@@ -564,6 +566,7 @@
 
         // Data flow animation
         const flowConfig = {
+            database: { type: 'sync', from: 'App', to: 'Database', caption: 'Databases: the app writes or reads records directly from persistent storage — the most direct data flow, often sitting behind the REST/RPC calls below.' },
             rest: { type: 'sync', from: 'Client', to: 'Server', caption: 'REST API: the client makes a call and waits for a single answer — like calling customer service and waiting on the line.' },
             graphql: { type: 'sync', from: 'Client', to: 'Server', caption: 'GraphQL: the client asks for exactly the fields it wants — like telling a personal shopper precisely what to fetch, nothing more.' },
             rpc: { type: 'sync', from: 'Service A', to: 'Service B', caption: 'RPC (gRPC): a direct "walkie-talkie" call between internal services — extremely fast, almost no latency.' },
